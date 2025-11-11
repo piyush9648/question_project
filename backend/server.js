@@ -25,7 +25,12 @@ if (!fs.existsSync(uploadsDir)) {
 
 const app = express();
 
-app.use(cors());
+// app.use(cors());
+const allowedOrigins = [
+  "http://localhost:5173",
+  "https://question-project-pi.vercel.app"
+];
+
 app.use(express.json());
 app.use(morgan('dev'));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
