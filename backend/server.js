@@ -31,6 +31,22 @@ const allowedOrigins = [
   "https://question-project-pi.vercel.app"
 ];
 
+app.use(
+  cors({
+    origin: function (origin, callback) {
+      // Allow no-origin requests (like Postman)
+      if (!origin) return callback(null, true);
+
+      if (allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("CORS Not Allowed"));
+      }
+    },
+    credentials: true,
+  })
+);
+
 app.use(express.json());
 app.use(morgan('dev'));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
