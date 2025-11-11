@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, useRef } from 'react'
 import { Link } from 'react-router-dom'
-import { createClient } from '../lib/api.js'
+import { createClient, getApiBaseUrl } from '../lib/api.js'
 import { useAuth } from '../state/AuthContext.jsx'
 
 export default function Home() {
@@ -198,7 +198,7 @@ function CompanyFolder({ company, questions }) {
 }
 
 function ResultItem({ q }) {
-  const base = import.meta.env.VITE_API_URL || 'http://localhost:5000'
+  const base = getApiBaseUrl()
   const thumb = q.imageUrls?.[0]
   const src = thumb && (thumb.startsWith('http') ? thumb : `${base}${thumb}`)
   const capitalized = q.company ? q.company.charAt(0).toUpperCase() + q.company.slice(1) : q.company

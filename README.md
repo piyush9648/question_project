@@ -102,7 +102,76 @@ use questions_app
 // db.users.updateOne({ email: "you@example.com" }, { $set: { role: "admin" } })
 ```
 
-## Production
-- Serve frontend separately (e.g., Netlify/Vercel) and point `VITE_API_URL` to your backend.
-- Set secure JWT secret and use a managed MongoDB (e.g., Atlas).
+## Production Deployment
+
+### Frontend Deployment (Vercel)
+
+1. **Push your code to GitHub**
+   ```bash
+   git add .
+   git commit -m "Deploy to production"
+   git push origin main
+   ```
+
+2. **Deploy to Vercel**
+   - Go to [Vercel](https://vercel.com)
+   - Import your GitHub repository
+   - Set the root directory to `frontend/`
+   - Add environment variable:
+     ```
+     VITE_API_URL=https://your-backend-domain.com
+     ```
+   - Deploy
+
+3. **Environment Variables in Vercel**
+   - Go to Project Settings → Environment Variables
+   - Add: `VITE_API_URL` = your backend API URL (e.g., `https://api.yourdomain.com`)
+
+### Backend Deployment (Railway/Render/Heroku)
+
+1. **Environment Variables** (create `.env` file):
+   ```env
+   PORT=5000
+   NODE_ENV=production
+   MONGO_URI=mongodb+srv://username:password@cluster.mongodb.net/questions_app?retryWrites=true&w=majority
+   JWT_SECRET=your-strong-random-secret-key-here
+   CLIENT_URL=https://question-project-pi.vercel.app
+   ```
+
+2. **Deploy to Railway/Render**
+   - Connect your GitHub repository
+   - Set root directory to `backend/`
+   - Add all environment variables
+   - Deploy
+
+3. **Important Notes:**
+   - Make sure your backend URL is accessible (not localhost)
+   - Update `CLIENT_URL` to match your frontend URL
+   - Use MongoDB Atlas for production database
+   - Set a strong `JWT_SECRET` (use a random string generator)
+   - The `/uploads` folder needs persistent storage (consider using cloud storage like AWS S3 or Cloudinary for production)
+
+### MongoDB Atlas Setup
+
+1. Create account at [MongoDB Atlas](https://www.mongodb.com/cloud/atlas)
+2. Create a new cluster
+3. Get connection string: `mongodb+srv://username:password@cluster.mongodb.net/questions_app`
+4. Add your IP to whitelist (or use 0.0.0.0/0 for all IPs)
+5. Update `MONGO_URI` in backend `.env`
+
+### CORS Configuration
+
+The backend is already configured to allow requests from:
+- `https://question-project-pi.vercel.app`
+- Your `CLIENT_URL` environment variable
+- Localhost (for development)
+
+### Image Storage
+
+For production, consider using cloud storage:
+- **AWS S3** + Multer-S3
+- **Cloudinary** (already has config file)
+- **Google Cloud Storage**
+
+Current setup uses local file storage which may not persist on some hosting platforms.
 

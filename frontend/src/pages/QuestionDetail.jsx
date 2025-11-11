@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { createClient } from '../lib/api.js'
+import { createClient, getApiBaseUrl } from '../lib/api.js'
 import { useAuth } from '../state/AuthContext.jsx'
 
 export default function QuestionDetail() {
@@ -51,7 +51,7 @@ export default function QuestionDetail() {
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
             {q.imageUrls.map((url, i) => {
-              const base = import.meta.env.VITE_API_URL || 'http://localhost:5000'
+              const base = getApiBaseUrl()
               const src = url.startsWith('http') ? url : `${base}${url}`
               return (
                 <a 
@@ -81,9 +81,9 @@ export default function QuestionDetail() {
       )}
 
         <div className="flex items-center gap-3 mb-3">
-          {user?.role === 'admin' ? (
+          <button className="text-blue-400" onClick={()=>setShow(s=>!s)}>{show ? 'Hide Solution' : 'Show Solution'}</button>
+          {user?.role === 'admin' && (
             <>
-              <button className="text-blue-400" onClick={()=>setShow(s=>!s)}>{show ? 'Hide Solution' : 'Show Solution'}</button>
               <button className="text-amber-400" onClick={()=>setEditing(e=>!e)}>{editing ? 'Cancel Edit' : 'Edit'}</button>
               <button className="text-red-400" onClick={async()=>{
                 if (!confirm('Delete this question?')) return
@@ -95,29 +95,12 @@ export default function QuestionDetail() {
                 }
               }}>Delete</button>
             </>
-          ) : (
-            <button className="text-blue-400" onClick={()=>setShow(s=>!s)}>{show ? 'Hide Contact Info' : 'View Solution'}</button>
           )}
         </div>
         {show && (
           <>
             <div className="border-t border-slate-700 my-4" />
-            {user?.role === 'admin' ? (
-              <div className="bg-black border border-slate-700 rounded p-3 whitespace-pre-wrap text-gray-200">{q.solution}</div>
-            ) : (
-              <div className="bg-black border border-slate-700 rounded p-4">
-                <p className="text-gray-300 mb-3">For solution contact admin:</p>
-                <a 
-                  href="https://t.me/Oahelp9026" 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 text-blue-400 hover:text-blue-300 transition"
-                >
-                  <span>📱</span>
-                  <span className="underline">t.me/Oahelp9026</span>
-                </a>
-              </div>
-            )}
+            <div className="bg-black border border-slate-700 rounded p-3 whitespace-pre-wrap text-gray-200">{q.solution}</div>
           </>
         )}
 

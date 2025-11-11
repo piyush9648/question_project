@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../state/AuthContext.jsx'
-import { createClient } from '../lib/api.js'
+import { createClient, getApiBaseUrl } from '../lib/api.js'
 
 export default function Questions() {
   const { token } = useAuth()
@@ -56,7 +56,7 @@ export default function Questions() {
 
 function QuestionListItem({ q }) {
   const raw = q.imageUrls?.[0]
-  const base = import.meta.env.VITE_API_URL || 'http://localhost:5000'
+  const base = getApiBaseUrl()
   const thumb = raw && (raw.startsWith('http') ? raw : `${base}${raw}`)
   return (
     <Link to={`/questions/${q._id}`} className="block bg-black shadow rounded p-4 hover:shadow-md transition border border-slate-700">
