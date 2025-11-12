@@ -3,7 +3,7 @@ import Question from '../models/Question.js';
 
 export const addQuestion = async (req, res) => {
   try {
-    const { company, questionText, solution } = req.body;
+    const { company, title, functionName, questionText, solution, imageBlurSettings } = req.body;
     if (!company || !questionText || !solution) {
       return res.status(400).json({ message: 'All fields are required' });
     }
@@ -23,7 +23,31 @@ export const addQuestion = async (req, res) => {
       console.log('⚠️ No images received');
     }
     
-    const created = await Question.create({ company: normalizedCompany, questionText, solution, imageUrls });
+    // Parse blur settings - default to all false if not provided or if array length doesn't match
+    let blurSettings = [];
+    if (imageBlurSettings) {
+      try {
+        const parsed = typeof imageBlurSettings === 'string' ? JSON.parse(imageBlurSettings) : imageBlurSettings;
+        blurSettings = Array.isArray(parsed) ? parsed : [];
+      } catch (e) {
+        blurSettings = [];
+      }
+    }
+    // Ensure blur settings array matches imageUrls length, defaulting to false
+    while (blurSettings.length < imageUrls.length) {
+      blurSettings.push(false);
+    }
+    blurSettings = blurSettings.slice(0, imageUrls.length);
+    
+    const created = await Question.create({ 
+      company: normalizedCompany, 
+      title: title?.trim() || '', 
+      functionName: functionName?.trim() || '', 
+      questionText, 
+      solution, 
+      imageUrls,
+      imageBlurSettings: blurSettings
+    });
     console.log(`✅ Question created: ${created._id} for company: ${normalizedCompany} with ${imageUrls.length} images`);
     return res.status(201).json(created);
   } catch (err) {
@@ -35,15 +59,44 @@ export const addQuestion = async (req, res) => {
 export const updateQuestion = async (req, res) => {
   try {
     const { id } = req.params;
-    const { company, questionText, solution } = req.body;
+    const { company, title, functionName, questionText, solution, imageBlurSettings } = req.body;
     const q = await Question.findById(id);
     if (!q) return res.status(404).json({ message: 'Not found' });
     if (company) q.company = company.trim().toLowerCase(); // Normalize to lowercase
+    if (title !== undefined) q.title = title.trim() || '';
+    if (functionName !== undefined) q.functionName = functionName.trim() || '';
     if (questionText) q.questionText = questionText;
     if (solution) q.solution = solution;
+    
+    // Handle image updates
     if (req.files && req.files.length > 0) {
       q.imageUrls = req.files.map(f => `/uploads/${f.filename}`);
+      // Reset blur settings for new images if not provided
+      if (imageBlurSettings === undefined) {
+        q.imageBlurSettings = new Array(q.imageUrls.length).fill(false);
+      }
     }
+    
+    // Update blur settings if provided
+    if (imageBlurSettings !== undefined) {
+      try {
+        const parsed = typeof imageBlurSettings === 'string' ? JSON.parse(imageBlurSettings) : imageBlurSettings;
+        if (Array.isArray(parsed)) {
+          // Ensure array length matches imageUrls length
+          const blurSettings = [...parsed];
+          while (blurSettings.length < q.imageUrls.length) {
+            blurSettings.push(false);
+          }
+          q.imageBlurSettings = blurSettings.slice(0, q.imageUrls.length);
+        }
+      } catch (e) {
+        // If parsing fails, keep existing settings or default to all false
+        if (!q.imageBlurSettings || q.imageBlurSettings.length !== q.imageUrls.length) {
+          q.imageBlurSettings = new Array(q.imageUrls.length).fill(false);
+        }
+      }
+    }
+    
     await q.save();
     return res.json(q);
   } catch (err) {

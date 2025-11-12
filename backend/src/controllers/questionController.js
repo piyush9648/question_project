@@ -2,7 +2,7 @@ import Question from '../models/Question.js';
 
 export const listQuestions = async (req, res) => {
   try {
-    const { company } = req.query;
+    const { company, functionName } = req.query;
     let filter = {};
     
     if (company && company.trim()) {
@@ -13,11 +13,22 @@ export const listQuestions = async (req, res) => {
       
       // Use case-insensitive regex for flexible matching
       // This allows partial matches and handles typos
-      filter = {
-        company: {
-          $regex: escapedTerm,
-          $options: 'i' // case-insensitive
-        }
+      filter.company = {
+        $regex: escapedTerm,
+        $options: 'i' // case-insensitive
+      };
+    }
+    
+    if (functionName && functionName.trim()) {
+      // Convert search term to lowercase and escape special regex characters
+      const searchTerm = functionName.trim().toLowerCase();
+      // Escape special regex characters but allow * for wildcard matching
+      const escapedTerm = searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '.*');
+      
+      // Use case-insensitive regex for flexible matching
+      filter.functionName = {
+        $regex: escapedTerm,
+        $options: 'i' // case-insensitive
       };
     }
     
@@ -62,6 +73,36 @@ export const getCompanySuggestions = async (req, res) => {
     return res.json(suggestions);
   } catch (err) {
     console.error('Get company suggestions error:', err);
+    return res.status(500).json({ message: 'Server error' });
+  }
+};
+
+export const getFunctionNameSuggestions = async (req, res) => {
+  try {
+    const { q } = req.query; // search query
+    let filter = {};
+    
+    if (q && q.trim()) {
+      const searchTerm = q.trim().toLowerCase();
+      const escapedTerm = searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '.*');
+      filter = {
+        functionName: {
+          $regex: escapedTerm,
+          $options: 'i'
+        }
+      };
+    }
+    
+    // Get distinct function names matching the filter, excluding empty strings
+    const functionNames = await Question.distinct('functionName', filter);
+    // Filter out empty strings and null values, limit to 10 suggestions and sort alphabetically
+    const suggestions = functionNames
+      .filter(fn => fn && fn.trim().length > 0)
+      .slice(0, 10)
+      .sort();
+    return res.json(suggestions);
+  } catch (err) {
+    console.error('Get function name suggestions error:', err);
     return res.status(500).json({ message: 'Server error' });
   }
 };
